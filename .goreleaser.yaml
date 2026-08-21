@@ -1,0 +1,29 @@
+# GoReleaser config - produces free, prebuilt scbox binaries. No license, no keys.
+version: 2
+
+project_name: scbox
+
+builds:
+  - id: scbox
+    main: .
+    binary: scbox
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Version }}
+
+# install.sh expects flat asset names like `scbox_linux_amd64` plus checksums.txt.
+archives:
+  - id: raw
+    formats: [binary]
+    name_template: "{{ .Binary }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+release:
+  draft: false

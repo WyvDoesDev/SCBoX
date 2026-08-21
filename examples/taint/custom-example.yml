@@ -1,0 +1,45 @@
+# Example: org-specific taint rules.
+#
+# A taint rule names SOURCES (env vars / files the sample reads) and SINKS
+# (network, command, file). SCBoX serves a believable bait value for each
+# source - or your own `bait:` - then flags the rule only when that exact value
+# reaches one of the sinks, including base64/hex-encoded. This is true data-flow
+# detection: reading the secret is not enough, the value has to leave.
+#
+#   scbox --rules examples/taint/custom-example.yml ./suspicious-package
+#
+# Fields:
+#   name        required, unique. Shown in the verdict.
+#   description optional, appears as evidence.
+#   severity    low | suspicious | malicious  (weights 10 / 30 / 60). Default suspicious.
+#   weight      optional 1..100, overrides severity.
+#   sources     list of { env: GLOB } or { file: GLOB }, each optionally with bait.
+#   sinks       any of [network, command, file]. Default [network].
+
+taint:
+  # Catch a token from a company-internal env var being shipped anywhere out.
+  - name: corp-api-token
+    description: internal Acme API token must never leave the box
+    severity: malicious
+    sources:
+      - env: ACME_API_TOKEN
+        bait: acme_live_3f9c8b21d7e64a05b1c2  # served when the sample reads it
+    sinks: [network, command, file]
+
+  # Catch a private config file's contents being exfiltrated over the network.
+  - name: corp-config-leak
+    description: ~/.config/acme/*.json holds signing keys
+    severity: suspicious
+    sources:
+      - file: "~/.config/acme/*.json"
+    sinks: [network]
+
+  # Lower-severity heads-up: an internal service URL appearing in a spawned
+  # command line (possible SSRF / lateral movement reconnaissance).
+  - name: internal-endpoint-in-command
+    description: internal service hostname used inside a shell command
+    severity: low
+    sources:
+      - env: ACME_INTERNAL_URL
+        bait: https://vault.internal.acme.example
+    sinks: [command]

@@ -1,0 +1,8 @@
+{
+  "name": "sandbox-probe",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "postinstall": "bash probe.sh"
+  }
+}
