@@ -242,11 +242,11 @@ func (r *Runtime) fakeFileContent(p string) (string, bool) {
 	case hasSuf(p, "/.aws/config"):
 		return "[default]\nregion = us-east-1\noutput = json\n[profile prod]\nregion = us-west-2\n", true
 	case hasSuf(p, "/.ssh/id_rsa", "/.ssh/id_dsa"):
-		return "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn\nNhAAAAAwEAAQAAAYEAwJ9aQx2LK7nB3vR1tWnB7sH4cY6dA0eUgJiOpLmFAKEKEYDATAxyz\nABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzFAKEFAKE\n-----END OPENSSH PRIVATE KEY-----\n", true
+		return prof.Bait.SSHRSA, true
 	case hasSuf(p, "/.ssh/id_ed25519"):
-		return "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\nQyNTUxOQAAACBFAKEed25519keymaterialFAKEFAKEFAKEFAKEFAKEFA==\n-----END OPENSSH PRIVATE KEY-----\n", true
+		return prof.Bait.SSHED25519, true
 	case hasSuf(p, "/.ssh/id_rsa.pub", "/.ssh/id_ed25519.pub"):
-		return "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFAKEpublickeymaterial " + u + "@" + prof.Hostname + "\n", true
+		return prof.Bait.SSHPub + " " + u + "@" + prof.Hostname + "\n", true
 	case hasSuf(p, "/.ssh/config"):
 		return "Host github.com\n\tUser git\n\tIdentityFile ~/.ssh/id_ed25519\nHost prod\n\tHostName 203.0.113.27\n\tUser deploy\n", true
 	case hasSuf(p, "/.ssh/known_hosts"):
@@ -256,7 +256,7 @@ func (r *Runtime) fakeFileContent(p string) (string, bool) {
 	case hasSuf(p, "/.docker/config.json"):
 		return "{\n  \"auths\": {\n    \"https://index.docker.io/v1/\": {\n      \"auth\": \"" + prof.Bait.DockerAuth + "\"\n    }\n  }\n}\n", true
 	case hasSuf(p, "/.kube/config"):
-		return "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    server: https://10.0.0.1:6443\n  name: prod\nusers:\n- name: " + u + "\n  user:\n    token: eyJhbGciOiJSUzI1NiFAKEkubernetesServiceAccountTokenXXXX.eyJpc3MiOiJrFAKE.sigFAKE\n", true
+		return "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    server: https://10.0.0.1:6443\n  name: prod\nusers:\n- name: " + u + "\n  user:\n    token: " + prof.Bait.KubeToken + "\n", true
 	case hasSuf(p, "/.env", "/.env.local", "/.env.production"):
 		return "NODE_ENV=production\nDATABASE_URL=postgres://app:" + prof.Bait.DBPass + "@db.internal:5432/app\nSTRIPE_SECRET_KEY=" + prof.Bait.StripeKey + "\nJWT_SECRET=" + prof.Bait.JWTSecret + "\nWALLET_PRIVATE_KEY=0x" + prof.Bait.WalletKey + "\nMNEMONIC=\"" + prof.Bait.Mnemonic + "\"\n", true
 	case hasSuf(p, "/.gnupg/secring.gpg", "/.pgpass"):

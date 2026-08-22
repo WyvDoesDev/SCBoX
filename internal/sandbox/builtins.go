@@ -1708,8 +1708,8 @@ func (r *Runtime) modCrypto() goja.Value {
 	set(m, "createPrivateKey", r.fn(func(goja.FunctionCall) goja.Value { return r.obj() }))
 	keypair := func() goja.Value {
 		o := r.obj()
-		set(o, "publicKey", "-----BEGIN PUBLIC KEY-----\nFAKE\n-----END PUBLIC KEY-----")
-		set(o, "privateKey", "-----BEGIN PRIVATE KEY-----\nFAKE\n-----END PRIVATE KEY-----")
+		set(o, "publicKey", r.profile.Bait.PEMPublic)
+		set(o, "privateKey", r.profile.Bait.PEMPrivate)
 		return o
 	}
 	set(m, "generateKeyPairSync", r.fn(func(call goja.FunctionCall) goja.Value {

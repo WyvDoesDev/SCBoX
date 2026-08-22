@@ -108,10 +108,10 @@ func fakeCommandOutput(r *Runtime, args []string) string {
 		// EC2 IMDS endpoints - hand back believable creds to drive AWS theft.
 		if strings.Contains(joined, "169.254.169.254") || strings.Contains(joined, "meta-data") {
 			if strings.Contains(joined, "api/token") {
-				return "AQAEAFakeIMDSv2TokenXXXXXXXXXXXXXXXXXX=="
+				return prof.Bait.IMDSToken
 			}
 			if strings.Contains(joined, "security-credentials/") && !strings.HasSuffix(joined, "security-credentials/") {
-				return `{"Code":"Success","AccessKeyId":"ASIAFAKEEC2ROLEKEY00","SecretAccessKey":"wJalrFakeEc2SecretXXXXXXXXXXXXXXXX","Token":"FQoFakeSessionToken","Expiration":"2030-01-01T00:00:00Z"}`
+				return `{"Code":"Success","AccessKeyId":"` + prof.Bait.EC2Key + `","SecretAccessKey":"` + prof.Bait.EC2Secret + `","Token":"` + prof.Bait.EC2Session + `","Expiration":"2030-01-01T00:00:00Z"}`
 			}
 			return "ec2-instance-role"
 		}

@@ -78,6 +78,16 @@ type baitCreds struct {
 	Wallet      string // bait BTC address (served on clipboard reads to trip clippers)
 	WalletKey   string // bait wallet private key (hex, served in .env / env)
 	Mnemonic    string // bait BIP39 seed phrase (served in .env / env)
+	SSHRSA      string // bait ~/.ssh/id_rsa (OpenSSH armor, random body per run)
+	SSHED25519  string // bait ~/.ssh/id_ed25519
+	SSHPub      string // bait public key blob (no trailing comment)
+	KubeToken   string // bait kube service-account JWT
+	PEMPrivate  string // bait PEM private key returned by crypto.generateKeyPair
+	PEMPublic   string // bait PEM public key returned by crypto.generateKeyPair
+	IMDSToken   string // bait EC2 IMDSv2 session token
+	EC2Key      string // bait EC2 role access key (ASIA…, temporary STS shape)
+	EC2Secret   string // bait EC2 role secret access key
+	EC2Session  string // bait EC2 role session token
 }
 
 const profileSeedEnv = "SCBOX_PROFILE_SEED"
@@ -211,8 +221,51 @@ func buildProfile(rng *mrand.Rand) hostProfile {
 			Wallet:   "1" + randFrom(rng, "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz", 33),
 			WalletKey: randHex(rng, 64), // 32-byte private key
 			Mnemonic:  randMnemonic(rng),
+			// Key material is randomized per run: the armor and header prefixes look
+			// real, but the body differs every run so a published binary can't be
+			// fingerprinted by a constant decoy key.
+			SSHRSA:     randOpenSSHKey(rng, 380),
+			SSHED25519: randOpenSSHKey(rng, 180),
+			SSHPub:     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI" + randB64Secret(rng, 43),
+			KubeToken:  "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9." + randAlnum(rng, 120) + "." + randAlnum(rng, 43),
+			PEMPrivate: randPEMKey(rng, "PRIVATE KEY", 380),
+			PEMPublic:  randPEMKey(rng, "PUBLIC KEY", 120),
+			IMDSToken:  "AQAEA" + randB64Secret(rng, 50) + "==",
+			EC2Key:     "ASIA" + randUpperNum(rng, 16),
+			EC2Secret:  randB64Secret(rng, 40),
+			EC2Session: randB64Secret(rng, 120),
 		},
 	}
+}
+
+// wrap64 splits s into 70-character lines (PEM style), each newline-terminated.
+func wrap64(s string) string {
+	var sb strings.Builder
+	for len(s) > 70 {
+		sb.WriteString(s[:70])
+		sb.WriteByte('\n')
+		s = s[70:]
+	}
+	sb.WriteString(s)
+	sb.WriteByte('\n')
+	return sb.String()
+}
+
+// randOpenSSHKey renders a believable but per-run-random OpenSSH private key. The
+// "openssh-key-v1" header prefix (base64) looks real; the body is random so the
+// decoy key can't be recognized as SCBoX's.
+func randOpenSSHKey(rng *mrand.Rand, bodyLen int) string {
+	const hdr = "b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAAB"
+	return "-----BEGIN OPENSSH PRIVATE KEY-----\n" +
+		wrap64(hdr+randB64Secret(rng, bodyLen)) +
+		"-----END OPENSSH PRIVATE KEY-----\n"
+}
+
+// randPEMKey renders a PEM block with the given label and a random base64 body.
+func randPEMKey(rng *mrand.Rand, label string, bodyLen int) string {
+	return "-----BEGIN " + label + "-----\n" +
+		wrap64(randB64Secret(rng, bodyLen)) +
+		"-----END " + label + "-----\n"
 }
 
 // bip39Sample is a small slice of the BIP39 wordlist - enough to render a
